@@ -33,5 +33,7 @@ public class TaskStateEntity {
     //@EqualsAndHashCode.Exclude если используется @Data
     @Builder.Default
     @OneToMany(fetch = FetchType.LAZY)
+    //name - колонка которая будет сгенерирована в нашем task
+    @JoinColumn(name = "task_state_id", referencedColumnName = "id")
     List<TaskEntity> tasks = new ArrayList<>();
 }
