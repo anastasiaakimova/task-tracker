@@ -1,9 +1,9 @@
 package by.akimova.task.tracker.api.controllers;
 
+import by.akimova.task.tracker.api.controllers.helpers.ControllerHelper;
 import by.akimova.task.tracker.api.dto.AckDto;
 import by.akimova.task.tracker.api.dto.ProjectDto;
 import by.akimova.task.tracker.api.exceptions.BadRequestException;
-import by.akimova.task.tracker.api.exceptions.NotFoundException;
 import by.akimova.task.tracker.api.factories.ProjectDtoFactory;
 import by.akimova.task.tracker.store.entities.ProjectEntity;
 import by.akimova.task.tracker.store.repositories.ProjectRepository;
@@ -31,6 +31,7 @@ public class ProjectController {
 
     ProjectDtoFactory projectDtoFactory;
     ProjectRepository projectRepository;
+    ControllerHelper controllerHelper;
 
     public static final String FETCH_PROJECT = "/api/projects";
     public static final String CREATE_PROJECT = "/api/projects";
@@ -91,7 +92,7 @@ public class ProjectController {
             throw new BadRequestException("Name can't be empty.");
         }
 
-        ProjectEntity project = getProjectOrThrowException(projectId);
+        ProjectEntity project = controllerHelper.getProjectOrThrowException(projectId);
 
         projectRepository
                 .findByName(projectName)
@@ -108,28 +109,20 @@ public class ProjectController {
     }
 
     @DeleteMapping(DELETE_PROJECT)
-    public AckDto deleteProject(@PathVariable("projectId") Long projectId) {
+    public AckDto deleteProject(@PathVariable("project_id") Long projectId) {
 
-
-        getProjectOrThrowException(projectId);
+        controllerHelper.getProjectOrThrowException(projectId);
 
         projectRepository.deleteById(projectId);
         return AckDto.makeDefault(true);
     }
 
-    private ProjectEntity getProjectOrThrowException(Long projectId) {
-        return projectRepository
-                .findById(projectId)
-                .orElseThrow(() ->
-                        new NotFoundException(
-                                String.format(
-                                        "Project with \"%s\" doesn't exists.",
-                                        projectId
-                                )
-                        )
-                );
-    }
 
+
+    /**
+     * Метод который позволяет создать или обновить сущность.
+     * Может использоваться вместо двух отдельных методов
+     */
     @PutMapping(CREATE_OR_UPDATE_PROJECT)
     public ProjectDto createOrUpdateProject(
             @RequestParam(value = "project_id", required = false) Optional<Long> optionalProjectId,
@@ -146,7 +139,7 @@ public class ProjectController {
         }
 
        final ProjectEntity project = optionalProjectId
-                .map(this::getProjectOrThrowException)
+                .map(controllerHelper::getProjectOrThrowException)
                 .orElseGet(() -> ProjectEntity.builder().build());
 
         optionalProjectName.ifPresent(projectName -> {
